@@ -74,7 +74,7 @@ class TestControlRecordCreation:
             assert record_id is not None
             # Check defects were saved
             defect_records = db_session.query(ДефектЗаписи).filter_by(
-                запись_id=record_id
+                запись_контроля_id=record_id
             ).all()
             assert len(defect_records) == 2
     
@@ -239,9 +239,14 @@ class TestQualityMetrics:
                 notes=''
             )
             
-            metrics = calculate_quality_metrics(sample_shift.id)
+            # Test metrics calculation with aggregated values
+            total_cast = 200
+            total_accepted = 185
+            defects = {sample_defect_type.id: 15}
+            
+            metrics = calculate_quality_metrics(total_cast, total_accepted, defects)
             assert metrics is not None
-            assert 'quality_rate' in metrics
+            assert 'acceptance_rate' in metrics
             assert 'total_cast' in metrics
             assert metrics['total_cast'] == 200
             assert metrics['total_accepted'] == 185
