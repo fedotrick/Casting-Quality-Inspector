@@ -20,8 +20,7 @@ import re
 
 # Настройка логирования
 from utils.logging_config import setup_logging, log_operation, log_error_with_context, get_user_info, log_user_action, log_system_event
-from utils.error_handlers import error_handler, validate_and_handle_errors, handle_service_error, ОшибкаБазыДанных, ОшибкаИнтеграции, ОшибкаВалидации, handle_database_error, handle_integration_error, handle_validation_error
-from utils.ui_error_handlers import ui_error_handler, handle_ui_error, create_user_friendly_error_message, handle_ui_exception, create_error_response, handle_validation_errors
+from app.helpers.error_handlers import error_handler, validate_and_handle_errors, handle_service_error, ОшибкаБазыДанных, ОшибкаИнтеграции, ОшибкаВалидации, handle_database_error, handle_integration_error, handle_validation_error, ui_error_handler, handle_ui_error, create_user_friendly_error_message, handle_ui_exception, create_error_response, handle_validation_errors
 from utils.input_validators import input_validator, validate_route_card_number, validate_positive_integer, validate_shift_data_extended, validate_and_log_input, validate_control_data, validate_json_input, validate_form_input
 from database.external_db_integration import external_db_integration, search_route_card_in_external_db, update_route_card_status_in_external_db, write_detailed_route_card_info_to_external_db, validate_route_card_number_in_external_db
 
