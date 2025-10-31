@@ -5,6 +5,7 @@ Provides app fixture with temporary SQLite database and sample data.
 import pytest
 import tempfile
 import json
+import re
 from pathlib import Path
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
@@ -116,34 +117,81 @@ def sample_defect_type(db_session):
 
 @pytest.fixture
 def mock_external_db():
-    """Mock external database integration"""
-    with patch('app.services.database_service.search_route_card_in_foundry') as mock_search:
-        # Default return value for successful search
-        mock_search.return_value = {
-            'Маршрутная_карта': '123456',
-            'Номер_кластера': 'K001',
-            'Учетный_номер': 'U001',
+    """
+    Mock external database integration across all call sites.
+    Patches search_route_card_in_foundry in service, api, ui blueprints, and test modules.
+    Returns realistic card data based on the card number passed.
+    Validates card number format before returning data.
+    """
+    def create_card_data(card_number):
+        """Create realistic card data for the given card number with validation"""
+        # Validate card number format (must be 6 digits)
+        if not card_number or not re.match(r'^\d{6}$', card_number):
+            return None
+        
+        return {
+            'Маршрутная_карта': card_number,
+            'Номер_кластера': f'K{card_number[:3]}',
+            'Учетный_номер': f'U{card_number[:3]}',
             'Температура': '1500',
             'Наименование_отливки': 'Тестовая отливка',
             'Тип_литниковой_системы': 'Тип 1'
         }
-        yield mock_search
+    
+    # Patch all call sites after service refactor including test imports
+    with patch('app.services.database_service.search_route_card_in_foundry') as mock_service, \
+         patch('app.blueprints.api.search_route_card_in_foundry') as mock_api, \
+         patch('app.blueprints.ui.search_route_card_in_foundry') as mock_ui, \
+         patch('tests.test_route_cards.search_route_card_in_foundry') as mock_test:
+        
+        # Configure all mocks with side_effect to return card-specific data
+        mock_service.side_effect = create_card_data
+        mock_api.side_effect = create_card_data
+        mock_ui.side_effect = create_card_data
+        mock_test.side_effect = create_card_data
+        
+        # Return the test mock as the primary one for assertions (since tests import it)
+        yield mock_test
 
 
 @pytest.fixture
 def mock_external_db_not_found():
-    """Mock external database integration - card not found"""
-    with patch('app.services.database_service.search_route_card_in_foundry') as mock_search:
-        mock_search.return_value = None
-        yield mock_search
+    """
+    Mock external database integration - card not found.
+    Patches search_route_card_in_foundry in service, api, ui blueprints, and test modules.
+    """
+    # Patch all call sites after service refactor including test imports
+    with patch('app.services.database_service.search_route_card_in_foundry') as mock_service, \
+         patch('app.blueprints.api.search_route_card_in_foundry') as mock_api, \
+         patch('app.blueprints.ui.search_route_card_in_foundry') as mock_ui, \
+         patch('tests.test_route_cards.search_route_card_in_foundry') as mock_test:
+        
+        # Configure all mocks to return None (not found)
+        mock_service.return_value = None
+        mock_api.return_value = None
+        mock_ui.return_value = None
+        mock_test.return_value = None
+        
+        # Return the test mock as the primary one for assertions (since tests import it)
+        yield mock_test
 
 
 @pytest.fixture
 def mock_update_route_card():
-    """Mock external DB update function"""
-    with patch('app.services.database_service.update_route_card_status') as mock_update:
-        mock_update.return_value = True
-        yield mock_update
+    """
+    Mock external DB update function across all call sites.
+    Patches update_route_card_status in service and control service.
+    """
+    # Patch all potential call sites
+    with patch('app.services.database_service.update_route_card_status') as mock_service, \
+         patch('app.services.control_service.update_route_card_status') as mock_control:
+        
+        # Configure all mocks to return True (success)
+        mock_service.return_value = True
+        mock_control.return_value = True
+        
+        # Return the service mock as the primary one for assertions
+        yield mock_service
 
 
 def _populate_sample_data():
