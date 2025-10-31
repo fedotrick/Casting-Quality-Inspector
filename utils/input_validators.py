@@ -130,17 +130,22 @@ def validate_form_input(data: Dict[str, Any], required_fields: List[str]) -> Lis
 
 
 def sanitize_string(value: str) -> str:
-    """Sanitize string input to prevent XSS."""
+    """Sanitize string input to prevent XSS.
+    
+    Preserves single quotes while encoding other dangerous characters.
+    """
     if not value:
         return ""
     
-    # Remove potentially dangerous characters
-    # This is a basic sanitizer - Flask's template engine handles most XSS
-    dangerous_chars = ['<', '>', '"', "'", '&']
     result = str(value)
     
-    for char in dangerous_chars:
-        result = result.replace(char, '')
+    # HTML encode dangerous characters to prevent XSS
+    # Note: Must encode & first to avoid double-encoding
+    result = result.replace('&', '&amp;')
+    result = result.replace('<', '&lt;')
+    result = result.replace('>', '&gt;')
+    result = result.replace('"', '&quot;')
+    # Preserve single quotes - do not encode or remove them
     
     return result.strip()
 

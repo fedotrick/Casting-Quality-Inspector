@@ -12,6 +12,7 @@ from app.helpers.validators import (
     validate_json_input,
     validate_form_input
 )
+from utils.input_validators import sanitize_string
 
 
 class TestRouteCardValidation:
@@ -307,3 +308,88 @@ class TestEdgeCases:
             assert validate_route_card_number('123 456') is False
             assert validate_route_card_number(' 123456') is False
             assert validate_route_card_number('123456 ') is False
+
+
+class TestSanitization:
+    """Test string sanitization (XSS protection)"""
+    
+    def test_sanitize_preserves_single_quotes(self, app):
+        """Test that single quotes are preserved"""
+        with app.app_context():
+            # Common use cases with single quotes
+            assert sanitize_string("It's working") == "It's working"
+            assert sanitize_string("O'Brien") == "O'Brien"
+            assert sanitize_string("Don't") == "Don't"
+            assert sanitize_string("'quoted text'") == "'quoted text'"
+    
+    def test_sanitize_encodes_dangerous_characters(self, app):
+        """Test that dangerous characters are HTML encoded"""
+        with app.app_context():
+            # Less-than and greater-than signs
+            assert sanitize_string("<tag>") == "&lt;tag&gt;"
+            
+            # Double quotes
+            assert sanitize_string('He said "hello"') == "He said &quot;hello&quot;"
+            
+            # Ampersands
+            assert sanitize_string("Tom & Jerry") == "Tom &amp; Jerry"
+            
+            # All dangerous chars together (except single quotes)
+            assert sanitize_string('<>&"') == "&lt;&gt;&amp;&quot;"
+    
+    def test_sanitize_xss_attempts(self, app):
+        """Test that XSS attempts are neutralized"""
+        with app.app_context():
+            # Script injection
+            assert sanitize_string("<script>alert('XSS')</script>") == "&lt;script&gt;alert('XSS')&lt;/script&gt;"
+            
+            # Image tag with onerror
+            assert sanitize_string('<img src=x onerror=alert(1)>') == "&lt;img src=x onerror=alert(1)&gt;"
+            
+            # Event handler injection
+            assert sanitize_string('"><script>evil()</script>') == "&quot;&gt;&lt;script&gt;evil()&lt;/script&gt;"
+    
+    def test_sanitize_mixed_content(self, app):
+        """Test sanitization with mixed safe and dangerous content"""
+        with app.app_context():
+            # Single quotes with HTML tags
+            assert sanitize_string("<div class='test'>content</div>") == "&lt;div class='test'&gt;content&lt;/div&gt;"
+            
+            # Apostrophes with other dangerous chars
+            assert sanitize_string("It's <b>bold</b> & \"quoted\"") == "It's &lt;b&gt;bold&lt;/b&gt; &amp; &quot;quoted&quot;"
+            
+            # Russian text with single quotes and dangerous chars
+            assert sanitize_string("Не может's быть & <test>") == "Не может's быть &amp; &lt;test&gt;"
+    
+    def test_sanitize_edge_cases(self, app):
+        """Test edge cases"""
+        with app.app_context():
+            # Empty string
+            assert sanitize_string("") == ""
+            
+            # None
+            assert sanitize_string(None) == ""
+            
+            # Only single quotes
+            assert sanitize_string("'''") == "'''"
+            
+            # Whitespace trimming
+            assert sanitize_string("  text  ") == "text"
+            
+            # Multiple encodings needed
+            assert sanitize_string("&lt;already&gt;") == "&amp;lt;already&amp;gt;"
+    
+    def test_sanitize_real_world_scenarios(self, app):
+        """Test realistic user input scenarios"""
+        with app.app_context():
+            # User comments with apostrophes
+            assert sanitize_string("I can't believe it's not butter!") == "I can't believe it's not butter!"
+            
+            # Technical descriptions with units
+            assert sanitize_string("Temperature > 100°C & < 200°C") == "Temperature &gt; 100°C &amp; &lt; 200°C"
+            
+            # Names with apostrophes
+            assert sanitize_string("O'Reilly & Sons") == "O'Reilly &amp; Sons"
+            
+            # Measurements and formulas
+            assert sanitize_string("A = b' * c") == "A = b' * c"
