@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Создание смены{% endblock %}
+
+{% block content %}
+<h1>📋 Создание новой смены</h1>
+
+<form method="POST" action="{{ url_for('ui.create_shift_route') }}">
+    <div style="margin-bottom: 20px;">
+        <label for="date">Дата смены:</label>
+        <input type="date" id="date" name="date" required style="width: 100%;">
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <label for="shift_number">Номер смены:</label>
+        <select id="shift_number" name="shift_number" required style="width: 100%;">
+            <option value="">Выберите смену</option>
+            <option value="1">Смена 1 (07:00 - 19:00)</option>
+            <option value="2">Смена 2 (19:00 - 07:00)</option>
+        </select>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <label>Контролеры:</label>
+        {% if controllers %}
+            {% for controller in controllers %}
+            <div style="margin: 5px 0;">
+                <input type="checkbox" id="controller_{{ controller.id }}" name="controllers" value="{{ controller.имя }}">
+                <label for="controller_{{ controller.id }}" style="display: inline; font-weight: normal;">{{ controller.имя }}</label>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="color: #856404;">Нет доступных контролеров. <a href="{{ url_for('ui.manage_controllers') }}">Добавить контролера</a></p>
+        {% endif %}
+    </div>
+    
+    <button type="submit" class="btn btn-success">✅ Создать смену</button>
+    <a href="{{ url_for('ui.index') }}" class="btn btn-secondary">❌ Отмена</a>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Set today's date by default
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('date');
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.value = today;
+    
+    // Auto-select shift based on current time
+    const currentHour = new Date().getHours();
+    const shiftSelect = document.getElementById('shift_number');
+    if (currentHour >= 7 && currentHour < 19) {
+        shiftSelect.value = '1';
+    } else {
+        shiftSelect.value = '2';
+    }
+});
+</script>
+{% endblock %}
