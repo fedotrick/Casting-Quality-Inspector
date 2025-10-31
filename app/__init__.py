@@ -8,7 +8,7 @@ from flask_cors import CORS
 
 from .config import config
 from .helpers.logging_config import setup_logging
-from .services.database_service import get_db_connection, init_database
+from .database import init_db, init_app as init_database_app
 
 
 def create_app(config_name='default'):
@@ -40,15 +40,18 @@ def create_app(config_name='default'):
     if app.config['CORS_ENABLED']:
         CORS(app)
     
-    # Initialize database (within app context)
+    # Initialize database with SQLAlchemy (within app context)
     with app.app_context():
         try:
-            conn = get_db_connection()
-            init_database(conn)
-            conn.close()
-            logger.info("Database initialized successfully")
+            # Register teardown handler
+            init_database_app(app)
+            
+            # Initialize database tables and default data
+            init_db()
+            logger.info("Database initialized successfully with SQLAlchemy")
         except Exception as e:
             logger.error(f"Failed to initialize database: {e}")
+            raise
     
     # Register blueprints
     from .blueprints.ui import ui_bp

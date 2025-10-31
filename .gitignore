@@ -137,6 +137,7 @@ logs/*.log
 sessions/
 static/uploads/
 *.bak
+*_old.py
 .temporary_*
 
 # Environment configuration
