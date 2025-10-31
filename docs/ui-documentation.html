@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI Documentation - Casting Quality Inspector</title>
+    <style>
+        /* Reset and Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        /* Navigation */
+        .top-nav {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .top-nav .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .top-nav h1 {
+            font-size: 1.5em;
+        }
+        
+        .top-nav nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .top-nav nav a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        /* Main Layout */
+        .main-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        /* Sidebar */
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 30px;
+        }
+        
+        .sidebar {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+        
+        .sidebar h3 {
+            margin-bottom: 15px;
+            color: #007bff;
+        }
+        
+        .sidebar ul {
+            list-style: none;
+        }
+        
+        .sidebar ul li {
+            margin-bottom: 8px;
+        }
+        
+        .sidebar ul li a {
+            color: #333;
+            text-decoration: none;
+            display: block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar ul li a:hover {
+            background: #e3f2fd;
+            color: #007bff;
+        }
+        
+        /* Content */
+        .content {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+        }
+        
+        .section {
+            margin-bottom: 60px;
+        }
+        
+        .section h2 {
+            color: #007bff;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .section h3 {
+            color: #333;
+            margin: 30px 0 15px 0;
+        }
+        
+        .section p {
+            margin-bottom: 15px;
+            color: #555;
+        }
+        
+        /* Component Showcase */
+        .component {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        
+        .component-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #007bff;
+        }
+        
+        .component-demo {
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .component-code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .component-code pre {
+            margin: 0;
+        }
+        
+        /* Buttons - Copied from original style.css */
+        .btn {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-info {
+            background: #17a2b8;
+        }
+        
+        .btn-info:hover {
+            background: #138496;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        /* Flash Messages */
+        .flash-message {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .flash-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .flash-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        
+        /* Forms */
+        input, select, textarea {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0,123,255,0.3);
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        /* Info Sections */
+        .shift-info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .card-info {
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .search-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .statistics-section {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        /* Color Palette */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .color-box {
+            text-align: center;
+            padding: 30px 15px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .color-box.dark-text {
+            color: #333;
+        }
+        
+        .color-label {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: static;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .top-nav .container {
+                flex-direction: column;
+            }
+            
+            .top-nav nav {
+                margin-top: 15px;
+            }
+            
+            .top-nav nav a {
+                margin: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation -->
+    <div class="top-nav">
+        <div class="container">
+            <h1>🏭 UI Documentation - Casting Quality Inspector</h1>
+            <nav>
+                <a href="#colors">Цвета</a>
+                <a href="#buttons">Кнопки</a>
+                <a href="#forms">Формы</a>
+                <a href="#cards">Карточки</a>
+                <a href="#tables">Таблицы</a>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- Main Container -->
+    <div class="main-container">
+        <div class="content-wrapper">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <h3>📋 Содержание</h3>
+                <ul>
+                    <li><a href="#colors">🎨 Цветовая палитра</a></li>
+                    <li><a href="#buttons">🔘 Кнопки</a></li>
+                    <li><a href="#forms">📝 Формы</a></li>
+                    <li><a href="#flash">💬 Flash-сообщения</a></li>
+                    <li><a href="#cards">🗂️ Карточки</a></li>
+                    <li><a href="#stats">📊 Статистика</a></li>
+                    <li><a href="#tables">📋 Таблицы</a></li>
+                    <li><a href="#typography">✍️ Типографика</a></li>
+                </ul>
+            </aside>
+            
+            <!-- Main Content -->
+            <main class="content">
+                <!-- Colors Section -->
+                <section class="section" id="colors">
+                    <h2>🎨 Цветовая палитра</h2>
+                    <p>Основные цвета используемые в системе</p>
+                    
+                    <h3>Основные цвета</h3>
+                    <div class="color-grid">
+                        <div class="color-box" style="background: #007bff;">
+                            Primary Blue<br>
+                            <span class="color-label">#007bff</span>
+                        </div>
+                        <div class="color-box" style="background: #6c757d;">
+                            Secondary Gray<br>
+                            <span class="color-label">#6c757d</span>
+                        </div>
+                    </div>
+                    
+                    <h3>Цвета состояний</h3>
+                    <div class="color-grid">
+                        <div class="color-box" style="background: #28a745;">
+                            Success Green<br>
+                            <span class="color-label">#28a745</span>
+                        </div>
+                        <div class="color-box" style="background: #dc3545;">
+                            Danger Red<br>
+                            <span class="color-label">#dc3545</span>
+                        </div>
+                        <div class="color-box" style="background: #17a2b8;">
+                            Info Cyan<br>
+                            <span class="color-label">#17a2b8</span>
+                        </div>
+                        <div class="color-box dark-text" style="background: #ffc107;">
+                            Warning Yellow<br>
+                            <span class="color-label">#ffc107</span>
+                        </div>
+                    </div>
+                    
+                    <h3>Фоновые цвета</h3>
+                    <div class="color-grid">
+                        <div class="color-box dark-text" style="background: #f5f5f5;">
+                            Page Background<br>
+                            <span class="color-label">#f5f5f5</span>
+                        </div>
+                        <div class="color-box dark-text" style="background: #f8f9fa;">
+                            Section Background<br>
+                            <span class="color-label">#f8f9fa</span>
+                        </div>
+                        <div class="color-box dark-text" style="background: #e3f2fd;">
+                            Shift Info<br>
+                            <span class="color-label">#e3f2fd</span>
+                        </div>
+                        <div class="color-box dark-text" style="background: #d4edda;">
+                            Card Info<br>
+                            <span class="color-label">#d4edda</span>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Buttons Section -->
+                <section class="section" id="buttons">
+                    <h2>🔘 Кнопки</h2>
+                    <p>Все варианты кнопок с интерактивными примерами</p>
+                    
+                    <div class="component">
+                        <div class="component-title">Primary Button</div>
+                        <div class="component-demo">
+                            <button class="btn">🔍 Найти карту</button>
+                            <button class="btn">Обычная кнопка</button>
+                        </div>
+                        <div class="component-code"><pre>&lt;button class="btn"&gt;🔍 Найти карту&lt;/button&gt;</pre></div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-title">Success Button</div>
+                        <div class="component-demo">
+                            <button class="btn btn-success">✅ Сохранить</button>
+                            <button class="btn btn-success">Создать</button>
+                        </div>
+                        <div class="component-code"><pre>&lt;button class="btn btn-success"&gt;✅ Сохранить&lt;/button&gt;</pre></div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-title">Danger Button</div>
+                        <div class="component-demo">
+                            <button class="btn btn-danger">🔚 Закрыть смену</button>
+                            <button class="btn btn-danger">Удалить</button>
+                        </div>
+                        <div class="component-code"><pre>&lt;button class="btn btn-danger"&gt;Удалить&lt;/button&gt;</pre></div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-title">Secondary Button</div>
+                        <div class="component-demo">
+                            <button class="btn btn-secondary">⬅️ Назад</button>
+                            <button class="btn btn-secondary">❌ Отмена</button>
+                        </div>
+                        <div class="component-code"><pre>&lt;button class="btn btn-secondary"&gt;⬅️ Назад&lt;/button&gt;</pre></div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-title">Info Button</div>
+                        <div class="component-demo">
+                            <button class="btn btn-info">📱 Сканировать QR</button>
+                            <button class="btn btn-info">📊 Отчёты</button>
+                        </div>
+                        <div class="component-code"><pre>&lt;button class="btn btn-info"&gt;📊 Отчёты&lt;/button&gt;</pre></div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-title">Warning Button</div>
+                        <div class="component-demo">
+                            <button class="btn btn-warning">Деактивировать</button>
+                            <button class="btn btn-warning">⚠️ Предупреждение</button>
+                        </div>
+                        <div class="component-code"><pre>&lt;button class="btn btn-warning"&gt;Деактивировать&lt;/button&gt;</pre></div>
+                    </div>
+                </section>
+                
+                <!-- Forms Section -->
+                <section class="section" id="forms">
+                    <h2>📝 Формы</h2>
+                    <p>Элементы форм с примерами использования</p>
+                    
+                    <div class="component">
+                        <div class="component-title">Text Input</div>
+                        <div class="component-demo">
+                            <label for="demo-text">Текстовое поле:</label>
+                            <input type="text" id="demo-text" placeholder="Введите текст">
+                        </div>
+                        <div class="component-code"><pre>&lt;label for="field"&gt;Текстовое поле:&lt;/label&gt;
+&lt;input type="text" id="field" placeholder="Введите текст"&gt;</pre></div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-title">Number Input</div>
+                        <div class="component-demo">
+                            <label for="demo-number">Всего отлито:</label>
+                            <input type="number" id="demo-number" min="1" placeholder="0">
+                        </div>
+                        <div class="component-code"><pre>&lt;label for="total_cast"&gt;Всего отлито:&lt;/label&gt;
+&lt;input type="number" id="total_cast" min="1"&gt;</pre></div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-title">Date Input</div>
+                        <div class="component-demo">
+                            <label for="demo-date">Дата смены:</label>
+                            <input type="date" id="demo-date">
+                        </div>
+                        <div class="component-code"><pre>&lt;label for="date"&gt;Дата смены:&lt;/label&gt;
+&lt;input type="date" id="date"&gt;</pre></div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-title">Select Dropdown</div>
+                        <div class="component-demo">
+                            <label for="demo-select">Номер смены:</label>
+                            <select id="demo-select">
+                                <option value="">Выберите смену</option>
+                                <option value="1">Смена 1 (07:00 - 19:00)</option>
+                                <option value="2">Смена 2 (19:00 - 07:00)</option>
+                            </select>
+                        </div>
+                        <div class="component-code"><pre>&lt;select id="shift_number"&gt;
+    &lt;option value=""&gt;Выберите смену&lt;/option&gt;
+    &lt;option value="1"&gt;Смена 1&lt;/option&gt;
+&lt;/select&gt;</pre></div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-title">Textarea</div>
+                        <div class="component-demo">
+                            <label for="demo-textarea">Заметки:</label>
+                            <textarea id="demo-textarea" rows="3" placeholder="Введите заметки"></textarea>
+                        </div>
+                        <div class="component-code"><pre>&lt;label for="notes"&gt;Заметки:&lt;/label&gt;
+&lt;textarea id="notes" rows="3"&gt;&lt;/textarea&gt;</pre></div>
+                    </div>
+                </section>
+                
+                <!-- Flash Messages Section -->
+                <section class="section" id="flash">
+                    <h2>💬 Flash-сообщения</h2>
+                    <p>Уведомления для пользователя</p>
+                    
+                    <div class="component">
+                        <div class="component-title">Все типы сообщений</div>
+                        <div class="component-demo">
+                            <div class="flash-message flash-success">
+                                ✅ Смена успешно создана!
+                            </div>
+                            <div class="flash-message flash-error">
+                                ❌ Ошибка при создании смены
+                            </div>
+                            <div class="flash-message flash-info">
+                                ℹ️ Нет активной смены. Создайте новую смену.
+                            </div>
+                            <div class="flash-message flash-warning">
+                                ⚠️ Маршрутная карта уже обработана в текущей смене
+                            </div>
+                        </div>
+                        <div class="component-code"><pre>&lt;div class="flash-message flash-success"&gt;
+    Смена успешно создана!
+&lt;/div&gt;</pre></div>
+                    </div>
+                </section>
+                
+                <!-- Cards Section -->
+                <section class="section" id="cards">
+                    <h2>🗂️ Карточки информации</h2>
+                    <p>Информационные карточки для разных типов данных</p>
+                    
+                    <div class="component">
+                        <div class="component-title">Shift Info Card</div>
+                        <div class="component-demo">
+                            <div class="shift-info">
+                                <h3>📋 Информация о смене</h3>
+                                <p><strong>Дата:</strong> 2024-01-15</p>
+                                <p><strong>Смена:</strong> 1 (07:30 - активна)</p>
+                                <p><strong>Контролёры:</strong> Иванов И.И., Петров П.П.</p>
+                            </div>
+                        </div>
+                        <div class="component-code"><pre>&lt;div class="shift-info"&gt;
+    &lt;h3&gt;📋 Информация о смене&lt;/h3&gt;
+    &lt;p&gt;&lt;strong&gt;Дата:&lt;/strong&gt; 2024-01-15&lt;/p&gt;
+&lt;/div&gt;</pre></div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-title">Card Info (Success)</div>
+                        <div class="component-demo">
+                            <div class="card-info">
+                                <h4>✅ Маршрутная карта найдена</h4>
+                                <p><strong>Номер:</strong> 000295</p>
+                                <p><strong>Учетный номер:</strong> 12345</p>
+                                <p><strong>Наименование отливки:</strong> Деталь А</p>
+                            </div>
+                        </div>
+                        <div class="component-code"><pre>&lt;div class="card-info"&gt;
+    &lt;h4&gt;✅ Маршрутная карта найдена&lt;/h4&gt;
+    &lt;p&gt;&lt;strong&gt;Номер:&lt;/strong&gt; 000295&lt;/p&gt;
+&lt;/div&gt;</pre></div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-title">Search Section</div>
+                        <div class="component-demo">
+                            <div class="search-section">
+                                <h3>🔍 Поиск маршрутной карты</h3>
+                                <input type="text" placeholder="000295" maxlength="6">
+                                <button class="btn">🔍 Найти карту</button>
+                                <button class="btn btn-info">📱 Сканировать QR</button>
+                            </div>
+                        </div>
+                        <div class="component-code"><pre>&lt;div class="search-section"&gt;
+    &lt;h3&gt;🔍 Поиск маршрутной карты&lt;/h3&gt;
+    &lt;input type="text" placeholder="000295"&gt;
+    &lt;button class="btn"&gt;🔍 Найти&lt;/button&gt;
+&lt;/div&gt;</pre></div>
+                    </div>
+                </section>
+                
+                <!-- Statistics Section -->
+                <section class="section" id="stats">
+                    <h2>📊 Статистика</h2>
+                    <p>Карточки статистики с grid layout</p>
+                    
+                    <div class="component">
+                        <div class="component-title">Statistics Grid</div>
+                        <div class="component-demo">
+                            <div class="statistics-section">
+                                <h3>📊 Статистика смены</h3>
+                                <div class="stats-grid">
+                                    <div class="stat-card">
+                                        <h4>📝 Записей</h4>
+                                        <p style="font-size: 24px; font-weight: bold; color: #007bff;">15</p>
+                                    </div>
+                                    <div class="stat-card">
+                                        <h4>🏭 Отлито</h4>
+                                        <p style="font-size: 24px; font-weight: bold; color: #28a745;">450</p>
+                                    </div>
+                                    <div class="stat-card">
+                                        <h4>✅ Принято</h4>
+                                        <p style="font-size: 24px; font-weight: bold; color: #17a2b8;">420</p>
+                                    </div>
+                                    <div class="stat-card">
+                                        <h4>📈 Качество</h4>
+                                        <p style="font-size: 24px; font-weight: bold; color: #ffc107;">93.3%</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="component-code"><pre>&lt;div class="statistics-section"&gt;
+    &lt;h3&gt;📊 Статистика смены&lt;/h3&gt;
+    &lt;div class="stats-grid"&gt;
+        &lt;div class="stat-card"&gt;
+            &lt;h4&gt;📝 Записей&lt;/h4&gt;
+            &lt;p&gt;15&lt;/p&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;</pre></div>
+                    </div>
+                </section>
+                
+                <!-- Tables Section -->
+                <section class="section" id="tables">
+                    <h2>📋 Таблицы</h2>
+                    <p>Таблицы данных с hover эффектами</p>
+                    
+                    <div class="component">
+                        <div class="component-title">Data Table</div>
+                        <div class="component-demo">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Дата</th>
+                                        <th>Смена</th>
+                                        <th>Контролёры</th>
+                                        <th>Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>2024-01-15</td>
+                                        <td>1</td>
+                                        <td>Иванов И.И., Петров П.П.</td>
+                                        <td>активна</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2024-01-14</td>
+                                        <td>2</td>
+                                        <td>Сидоров С.С.</td>
+                                        <td>завершена</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2024-01-14</td>
+                                        <td>1</td>
+                                        <td>Иванов И.И.</td>
+                                        <td>завершена</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="component-code"><pre>&lt;table&gt;
+    &lt;thead&gt;
+        &lt;tr&gt;
+            &lt;th&gt;Дата&lt;/th&gt;
+            &lt;th&gt;Смена&lt;/th&gt;
+        &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+        &lt;tr&gt;
+            &lt;td&gt;2024-01-15&lt;/td&gt;
+            &lt;td&gt;1&lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/tbody&gt;
+&lt;/table&gt;</pre></div>
+                    </div>
+                    
+                    <div class="component">
+                        <div class="component-title">Table with Actions</div>
+                        <div class="component-demo">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Имя</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Иванов И.И.</td>
+                                        <td>Активен</td>
+                                        <td>
+                                            <button class="btn btn-warning">Деактивировать</button>
+                                            <button class="btn btn-danger">Удалить</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Петров П.П.</td>
+                                        <td>Неактивен</td>
+                                        <td>
+                                            <button class="btn btn-success">Активировать</button>
+                                            <button class="btn btn-danger">Удалить</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="component-code"><pre>&lt;table&gt;
+    &lt;tbody&gt;
+        &lt;tr&gt;
+            &lt;td&gt;Иванов И.И.&lt;/td&gt;
+            &lt;td&gt;
+                &lt;button class="btn btn-warning"&gt;Деактивировать&lt;/button&gt;
+                &lt;button class="btn btn-danger"&gt;Удалить&lt;/button&gt;
+            &lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/tbody&gt;
+&lt;/table&gt;</pre></div>
+                    </div>
+                </section>
+                
+                <!-- Typography Section -->
+                <section class="section" id="typography">
+                    <h2>✍️ Типографика</h2>
+                    <p>Стили текста и заголовков</p>
+                    
+                    <div class="component">
+                        <div class="component-title">Headings</div>
+                        <div class="component-demo">
+                            <h1>H1 Heading - Заголовок первого уровня</h1>
+                            <h2>H2 Heading - Заголовок второго уровня</h2>
+                            <h3>H3 Heading - Заголовок третьего уровня</h3>
+                            <h4>H4 Heading - Заголовок четвертого уровня</h4>
+                            <p>Paragraph - Обычный текст параграфа с нормальной высотой строки для удобного чтения.</p>
+                            <p><strong>Strong text</strong> - Жирный текст для выделения важной информации</p>
+                        </div>
+                        <div class="component-code"><pre>&lt;h1&gt;Заголовок первого уровня&lt;/h1&gt;
+&lt;p&gt;Обычный текст&lt;/p&gt;
+&lt;strong&gt;Жирный текст&lt;/strong&gt;</pre></div>
+                    </div>
+                </section>
+                
+                <!-- Footer -->
+                <section style="margin-top: 80px; padding-top: 40px; border-top: 2px solid #e0e0e0; text-align: center; color: #666;">
+                    <p>📱 Casting Quality Inspector - UI Documentation</p>
+                    <p>Все компоненты взяты из реального приложения</p>
+                    <p>© 2024 - Документация обновлена</p>
+                </section>
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Highlight current section in sidebar
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.sidebar a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (window.pageYOffset >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.style.background = '';
+                link.style.color = '';
+                if (link.getAttribute('href') === '#' + current) {
+                    link.style.background = '#e3f2fd';
+                    link.style.color = '#007bff';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
