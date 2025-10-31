@@ -117,10 +117,9 @@ pytest -m database
 - `tests/test_repositories.py` - Тесты слоя данных (repositories)
 - `tests/test_validators.py` - Тесты валидации входных данных
 - `tests/test_error_handlers.py` - Тесты обработки ошибок
-- `tests/test_security.py` - Тесты безопасности и авторизации
+- `tests/test_security.py` - Тесты безопасности (валидация, XSS, SQL injection защита)
 - `tests/test_database_layer.py` - Тесты SQLAlchemy слоя
 - `tests/test_integration.py` - Интеграционные тесты
-- `tests/test_auth_integration.py` - Тесты аутентификации
 
 ### Особенности тестов
 
