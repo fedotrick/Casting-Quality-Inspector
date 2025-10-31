@@ -17,7 +17,7 @@ class TestCurrentShiftAPI:
             with client.session_transaction() as sess:
                 sess['current_shift_id'] = sample_shift.id
             
-            response = client.get('/api/current-shift')
+            response = client.get('/api/shifts/current')
             
             assert response.status_code == 200
             data = response.get_json()
@@ -28,7 +28,7 @@ class TestCurrentShiftAPI:
     def test_api_current_shift_no_active_shift(self, client, app):
         """Test getting current shift when none is active"""
         with app.app_context():
-            response = client.get('/api/current-shift')
+            response = client.get('/api/shifts/current')
             
             # Depending on implementation, might return 200 with null or 404
             data = response.get_json()
@@ -77,7 +77,7 @@ class TestDefectTypesAPI:
     def test_api_get_defect_types(self, client, app):
         """Test getting defect types"""
         with app.app_context():
-            response = client.get('/api/defect-types')
+            response = client.get('/api/defects/types')
             
             assert response.status_code == 200
             data = response.get_json()
@@ -91,39 +91,44 @@ class TestControllersAPI:
     """Test controllers API endpoints"""
     
     def test_api_get_controllers(self, client, app, sample_controller):
-        """Test getting controllers list"""
+        """Test getting controllers list - note: no GET endpoint, check via add"""
         with app.app_context():
-            response = client.get('/api/controllers')
+            # There's no GET /api/controllers endpoint
+            # Test that we can access controller functionality via add
+            response = client.post('/api/add-controller',
+                                   data={'name': 'Тест Контролер'},
+                                   follow_redirects=False)
             
+            # Should return JSON with success
             assert response.status_code == 200
             data = response.get_json()
-            assert 'success' in data
-            if data['success']:
-                assert 'controllers' in data
-                assert len(data['controllers']) > 0
+            assert data['success'] is True
     
     def test_api_add_controller(self, client, app):
-        """Test adding a new controller"""
+        """Test adding a new controller via API"""
         with app.app_context():
-            response = client.post('/api/controllers',
-                                   data=json.dumps({'name': 'Новиков Н.Н.'}),
-                                   content_type='application/json')
+            # Uses /api/add-controller POST route
+            response = client.post('/api/add-controller',
+                                   data={'name': 'Новиков Н.Н.'},
+                                   follow_redirects=False)
             
-            # Depending on implementation
-            if response.status_code == 200:
-                data = response.get_json()
-                assert data.get('success') is True
+            # Should return JSON success
+            assert response.status_code == 200
+            data = response.get_json()
+            assert data['success'] is True
     
     def test_api_toggle_controller(self, client, app, sample_controller):
-        """Test toggling controller active status"""
+        """Test toggling controller active status via API"""
         with app.app_context():
-            response = client.put(f'/api/controllers/{sample_controller.id}/toggle',
-                                  content_type='application/json')
+            # Uses /api/toggle-controller POST route
+            response = client.post('/api/toggle-controller',
+                                   data={'id': sample_controller.id},
+                                   follow_redirects=False)
             
-            # Depending on implementation
-            if response.status_code == 200:
-                data = response.get_json()
-                assert 'success' in data
+            # Should return JSON success
+            assert response.status_code == 200
+            data = response.get_json()
+            assert data['success'] is True
 
 
 class TestQRScanAPI:
@@ -264,7 +269,7 @@ class TestCORSHeaders:
     def test_cors_headers_present(self, client, app):
         """Test that CORS headers are present"""
         with app.app_context():
-            response = client.get('/api/controllers')
+            response = client.get('/api/shifts/current')
             
             # Check for CORS headers if CORS is enabled
             if app.config.get('CORS_ENABLED'):
