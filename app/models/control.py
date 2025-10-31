@@ -27,7 +27,7 @@ class ЗаписьКонтроля(Base):
     
     # Relationships
     смена = relationship("Смена", back_populates="записи")
-    дефекты = relationship("ДефектЗаписи", back_populates="запись")
+    дефекты = relationship("ДефектЗаписи", back_populates="запись", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<ЗаписьКонтроля(id={self.id}, смена_id={self.смена_id}, номер_маршрутной_карты='{self.номер_маршрутной_карты}')>"
