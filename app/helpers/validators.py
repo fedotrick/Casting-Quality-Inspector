@@ -100,12 +100,12 @@ def validate_shift_data_extended(date: str, shift_number: int, controllers: List
     if not controllers or len(controllers) == 0:
         errors.append("Необходимо выбрать хотя бы одного контролера")
     
-    # Check for duplicate active shift
+    # Check for duplicate active shift only
     if not errors and date and shift_number:
         try:
             session = get_db()
             repo = ShiftRepository(session)
-            if repo.check_duplicate(date, shift_number):
+            if repo.check_duplicate(date, shift_number, statuses=('активна',)):
                 errors.append(f"Смена {shift_number} на дату {date} уже активна")
         except Exception as e:
             logger.error(f"Ошибка проверки дублирования смены: {e}")

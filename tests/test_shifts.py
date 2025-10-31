@@ -169,6 +169,136 @@ class TestShiftRepository:
             repo = ShiftRepository(db_session)
             shifts = repo.get_all()
             assert len(shifts) > 0
+    
+    def test_check_duplicate_closed_shift_not_blocking(self, app, db_session, sample_shift):
+        """Test that closed shifts don't block creating new shift with same date/number"""
+        with app.app_context():
+            repo = ShiftRepository(db_session)
+            
+            # Close the sample shift
+            repo.close(sample_shift.id)
+            db_session.commit()
+            
+            # Check duplicate - should return False since the shift is now closed
+            is_duplicate = repo.check_duplicate(sample_shift.дата, sample_shift.номер_смены, statuses=('активна',))
+            assert is_duplicate is False
+            
+            # Should be able to create a new shift with same date and number
+            new_shift = repo.create(sample_shift.дата, sample_shift.номер_смены, ['Новый контролер'])
+            db_session.commit()
+            assert new_shift is not None
+            assert new_shift.id != sample_shift.id
+    
+    def test_check_duplicate_with_exclude_shift_id(self, app, db_session, sample_shift):
+        """Test duplicate check can exclude specific shift ID"""
+        with app.app_context():
+            repo = ShiftRepository(db_session)
+            
+            # Check duplicate without exclusion - should be duplicate
+            is_duplicate = repo.check_duplicate(sample_shift.дата, sample_shift.номер_смены)
+            assert is_duplicate is True
+            
+            # Check duplicate excluding the sample shift - should not be duplicate
+            is_duplicate = repo.check_duplicate(
+                sample_shift.дата, 
+                sample_shift.номер_смены, 
+                exclude_shift_id=sample_shift.id
+            )
+            assert is_duplicate is False
+    
+    def test_check_duplicate_case_insensitive_status(self, app, db_session):
+        """Test that status comparison is case-insensitive"""
+        with app.app_context():
+            repo = ShiftRepository(db_session)
+            date = datetime.now().strftime('%Y-%m-%d')
+            
+            # Create a shift with lowercase status (though normally it's 'активна')
+            shift = repo.create(date, 1, ['Контролер'])
+            db_session.commit()
+            
+            # Check with different case variations
+            assert repo.check_duplicate(date, 1, statuses=('АКТИВНА',)) is True
+            assert repo.check_duplicate(date, 1, statuses=('Активна',)) is True
+            assert repo.check_duplicate(date, 1, statuses=('активна',)) is True
+    
+    def test_check_duplicate_multiple_statuses(self, app, db_session, sample_shift):
+        """Test duplicate check with multiple statuses"""
+        with app.app_context():
+            repo = ShiftRepository(db_session)
+            
+            # Close the shift
+            repo.close(sample_shift.id)
+            db_session.commit()
+            
+            # Check with only 'активна' status - should not find duplicate
+            is_duplicate = repo.check_duplicate(sample_shift.дата, sample_shift.номер_смены, statuses=('активна',))
+            assert is_duplicate is False
+            
+            # Check with both statuses - should find duplicate
+            is_duplicate = repo.check_duplicate(
+                sample_shift.дата, 
+                sample_shift.номер_смены, 
+                statuses=('активна', 'закрыта')
+            )
+            assert is_duplicate is True
+
+
+class TestShiftCreationAfterClosure:
+    """Test shift creation after closing previous shift"""
+    
+    def test_create_shift_after_closing_previous(self, app, db_session):
+        """Test creating a shift with same date/number after closing previous one"""
+        with app.app_context():
+            date = datetime.now().strftime('%Y-%m-%d')
+            shift_number = 1
+            controllers = ['Контролер 1']
+            
+            # Create first shift
+            shift_id_1 = create_shift(date, shift_number, controllers)
+            assert shift_id_1 is not None
+            
+            # Verify shift is active
+            shift_1 = db_session.query(Смена).filter_by(id=shift_id_1).first()
+            assert shift_1.статус == 'активна'
+            
+            # Try to create duplicate - should fail
+            with pytest.raises(Exception) as exc_info:
+                create_shift(date, shift_number, ['Контролер 2'])
+            assert 'уже активна' in str(exc_info.value)
+            
+            # Close the first shift
+            result = close_shift(shift_id_1)
+            assert result is True
+            
+            # Verify shift is closed
+            shift_1 = db_session.query(Смена).filter_by(id=shift_id_1).first()
+            assert shift_1.статус == 'закрыта'
+            
+            # Now create new shift with same date/number - should succeed
+            shift_id_2 = create_shift(date, shift_number, ['Контролер 2'])
+            assert shift_id_2 is not None
+            assert shift_id_2 != shift_id_1
+            
+            # Verify new shift is active
+            shift_2 = db_session.query(Смена).filter_by(id=shift_id_2).first()
+            assert shift_2.статус == 'активна'
+            assert shift_2.дата == date
+            assert shift_2.номер_смены == shift_number
+    
+    def test_validation_allows_shift_after_closure(self, app, db_session):
+        """Test validation allows creating shift after previous one is closed"""
+        with app.app_context():
+            date = datetime.now().strftime('%Y-%m-%d')
+            shift_number = 2
+            controllers = ['Контролер А']
+            
+            # Create and close first shift
+            shift_id = create_shift(date, shift_number, controllers)
+            close_shift(shift_id)
+            
+            # Validate creating new shift - should pass
+            errors = validate_shift_data_extended(date, shift_number, ['Контролер Б'])
+            assert len(errors) == 0
 
 
 class TestAutoCloseShifts:
