@@ -235,14 +235,6 @@ def _populate_sample_data():
 
 
 @pytest.fixture
-def auth_headers():
-    """Return authentication headers for testing protected endpoints"""
-    return {
-        'Content-Type': 'application/json'
-    }
-
-
-@pytest.fixture
 def sample_control_data():
     """Sample control record data for testing"""
     return {

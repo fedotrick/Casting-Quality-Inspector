@@ -64,10 +64,9 @@ Comprehensive pytest test suite for the Quality Control application with 100+ au
 
 ### Existing Test Files
 
-9. **test_security.py** - Security tests
+9. **test_security.py** - Security tests (input validation, XSS protection, SQL injection prevention)
 10. **test_database_layer.py** - SQLAlchemy layer tests
 11. **test_integration.py** - Integration tests
-12. **test_auth_integration.py** - Authentication tests
 
 ## Running Tests
 

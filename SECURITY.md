@@ -6,30 +6,7 @@ This document describes the security measures implemented in the Quality Control
 
 ## Security Features
 
-### 1. Authentication & Authorization
-
-#### User Authentication
-- **Login System**: Secure login with username and password
-- **Password Hashing**: PBKDF2-HMAC-SHA256 with 100,000 iterations and unique salt per user
-- **Session Management**: Filesystem-based sessions with signing
-- **Role-Based Access Control**: Users have roles (user, admin) with different permissions
-
-#### User Management
-- Users are stored in the `пользователи` (users) table with Cyrillic naming
-- Passwords are never stored in plaintext
-- Last login timestamps are tracked
-
-#### Protected Routes
-All application routes except `/login` require authentication:
-- UI routes redirect to login page
-- API routes return 401 Unauthorized
-
-Admin-only routes (require `admin` role):
-- `/manage-controllers` - Controller management
-- `/add-controller` - Add new controller
-- Other administrative functions
-
-### 2. Session Security
+### 1. Session Security
 
 #### Session Configuration
 ```python
@@ -46,7 +23,7 @@ SESSION_COOKIE_HTTPONLY=True
 SESSION_COOKIE_SAMESITE=Lax  # Options: Lax, Strict, None
 ```
 
-### 3. Secret Key Management
+### 2. Secret Key Management
 
 #### Environment-Based Configuration
 The `SECRET_KEY` must be set via environment variable:
@@ -65,7 +42,7 @@ export SECRET_KEY='your-generated-key-here'
 - Development: Auto-generated key (with warning)
 - Production: Must set SECRET_KEY in environment or `.env` file
 
-### 4. CORS Configuration
+### 3. CORS Configuration
 
 #### Allowlist-Based CORS
 Only specified origins are allowed:
@@ -83,12 +60,11 @@ CORS_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 CORS_ALLOWED_HEADERS = ['Content-Type', 'Authorization', 'X-Requested-With']
 ```
 
-### 5. Input Validation
+### 4. Input Validation
 
 #### Pydantic Models
 All API inputs are validated using Pydantic models:
 
-- **LoginRequest**: Username and password validation
 - **ShiftCreateRequest**: Shift creation with date/number validation
 - **ControlDataRequest**: Quality control data with range checks
 - **ControllerRequest**: Controller management
@@ -118,7 +94,7 @@ class ControlDataRequest(BaseModel):
 - Table/column names validated against whitelist
 - No dynamic SQL generation with user input
 
-### 6. XSS Protection
+### 5. XSS Protection
 
 #### Template Rendering
 - Flask's Jinja2 auto-escaping enabled by default
@@ -132,7 +108,7 @@ from utils.input_validators import sanitize_string
 clean_input = sanitize_string(user_input)
 ```
 
-### 7. Path Traversal Protection
+### 6. Path Traversal Protection
 
 #### Static File Serving
 The `/static/<path:filename>` route includes protections:
@@ -146,7 +122,7 @@ allowed_extensions = {'.css', '.js', '.png', '.jpg', '.jpeg',
                       '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf'}
 ```
 
-### 8. Error Handling
+### 7. Error Handling
 
 #### Production Error Messages
 - Generic error messages shown to users
@@ -156,8 +132,6 @@ allowed_extensions = {'.css', '.js', '.png', '.jpg', '.jpeg',
 
 #### Error Handlers
 - 400 Bad Request
-- 401 Unauthorized
-- 403 Forbidden
 - 404 Not Found
 - 500 Internal Server Error
 - Generic exception handler
@@ -171,8 +145,6 @@ Create a `.env` file (see `.env.example`):
 ```bash
 # Required for production
 SECRET_KEY=your-secret-key-here
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=SecurePassword123!@#
 
 # Session security
 SESSION_COOKIE_SECURE=True  # Enable with HTTPS
@@ -197,23 +169,16 @@ DEBUG=False
 2. **Set Environment Variables**
    ```bash
    export SECRET_KEY='your-generated-key'
-   export ADMIN_USERNAME='admin'
-   export ADMIN_PASSWORD='YourSecurePassword123!@#'
    ```
 
 3. **Initialize Database**
    ```bash
    python main.py
    ```
-   This creates the users table and default admin user.
-
-4. **Change Default Password**
-   Log in with default credentials and change password immediately.
 
 ### Production Deployment Checklist
 
 - [ ] Set SECRET_KEY from environment
-- [ ] Set ADMIN_USERNAME and ADMIN_PASSWORD
 - [ ] Enable SESSION_COOKIE_SECURE (requires HTTPS)
 - [ ] Configure CORS_ORIGINS with actual domain
 - [ ] Set FLASK_ENV=production
@@ -224,47 +189,10 @@ DEBUG=False
 - [ ] Enable rate limiting (reverse proxy)
 - [ ] Set up monitoring/alerting
 
-## User Management
-
-### Creating Users
-
-#### Via Environment (Admin User)
-```bash
-export ADMIN_USERNAME=admin
-export ADMIN_PASSWORD=SecurePassword123!@#
-```
-
-#### Via Database (Additional Users)
-```python
-from utils.auth import create_user
-import sqlite3
-
-conn = sqlite3.connect('data/quality_control.db')
-create_user(conn, 'username', 'password', role='user')
-conn.close()
-```
-
-### Password Requirements
-
-Passwords must meet the following criteria:
-- Minimum 8 characters
-- At least one uppercase letter
-- At least one lowercase letter
-- At least one digit
-
-### Roles
-
-- **admin**: Full access including user/controller management
-- **user**: Standard access to quality control functions
-
 ## Logging
 
 ### Security Events Logged
 
-- User login attempts (success/failure)
-- User logout
-- Authentication failures
-- Authorization failures (403)
 - Input validation errors
 - Path traversal attempts
 - File access errors
@@ -286,14 +214,12 @@ Passwords must meet the following criteria:
 
 ### For Administrators
 
-1. **Use strong passwords** for all users
-2. **Change default credentials** immediately
-3. **Regularly review logs** for suspicious activity
-4. **Keep dependencies updated** (`pip install -U -r requirements.txt`)
-5. **Use HTTPS** in production
-6. **Backup database** regularly
-7. **Limit CORS origins** to known domains
-8. **Use rate limiting** at reverse proxy level
+1. **Regularly review logs** for suspicious activity
+2. **Keep dependencies updated** (`pip install -U -r requirements.txt`)
+3. **Use HTTPS** in production
+4. **Backup database** regularly
+5. **Limit CORS origins** to known domains
+6. **Use rate limiting** at reverse proxy level
 
 ### For Developers
 

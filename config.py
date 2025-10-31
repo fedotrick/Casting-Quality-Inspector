@@ -41,10 +41,6 @@ class Config:
     FOUNDRY_DB_PATH = Path(os.getenv('FOUNDRY_DB_PATH', r'C:\Users\1\Telegram\MetalFusionX\foundry.db'))
     ROUTE_CARDS_DB_PATH = Path(os.getenv('ROUTE_CARDS_DB_PATH', r'C:\Users\1\Telegram\FoamFusionLab\data\маршрутные_карты.db'))
     
-    # Admin credentials (from environment)
-    ADMIN_USERNAME = os.getenv('ADMIN_USERNAME')
-    ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
-    
     # Security settings
     MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))  # 16 MB max file upload
     
@@ -69,10 +65,6 @@ class Config:
         # Warn if SESSION_COOKIE_SECURE is False
         if not cls.SESSION_COOKIE_SECURE and not cls.DEBUG:
             warnings.append("WARNING: SESSION_COOKIE_SECURE is False. Enable for production with HTTPS!")
-        
-        # Warn if default admin credentials exist
-        if not cls.ADMIN_USERNAME or not cls.ADMIN_PASSWORD:
-            warnings.append("WARNING: ADMIN_USERNAME and ADMIN_PASSWORD not set. Default admin will be created!")
         
         return warnings
 

@@ -1,15 +1,12 @@
 """Tests for security features."""
 
 import pytest
-import sqlite3
-from pathlib import Path
 import sys
 import os
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils.auth import hash_password, verify_password, create_user, authenticate_user, init_users_table
 from utils.input_validators import (
     validate_route_card_number, 
     validate_positive_integer,
@@ -18,113 +15,10 @@ from utils.input_validators import (
     validate_column_name
 )
 from utils.validation_models import (
-    LoginRequest,
     ControlDataRequest,
-    ShiftCreateRequest,
-    ChangePasswordRequest
+    ShiftCreateRequest
 )
 from pydantic import ValidationError
-
-
-class TestPasswordHashing:
-    """Test password hashing and verification."""
-    
-    def test_hash_password_returns_hash_and_salt(self):
-        """Test that hash_password returns both hash and salt."""
-        password = "TestPassword123!"
-        pwd_hash, salt = hash_password(password)
-        
-        assert pwd_hash is not None
-        assert salt is not None
-        assert len(pwd_hash) > 0
-        assert len(salt) > 0
-    
-    def test_hash_password_unique_salts(self):
-        """Test that different salts produce different hashes."""
-        password = "TestPassword123!"
-        hash1, salt1 = hash_password(password)
-        hash2, salt2 = hash_password(password)
-        
-        assert salt1 != salt2
-        assert hash1 != hash2
-    
-    def test_verify_password_correct(self):
-        """Test password verification with correct password."""
-        password = "TestPassword123!"
-        pwd_hash, salt = hash_password(password)
-        
-        assert verify_password(password, pwd_hash, salt) is True
-    
-    def test_verify_password_incorrect(self):
-        """Test password verification with incorrect password."""
-        password = "TestPassword123!"
-        pwd_hash, salt = hash_password(password)
-        
-        assert verify_password("WrongPassword", pwd_hash, salt) is False
-    
-    def test_verify_password_wrong_salt(self):
-        """Test password verification with wrong salt."""
-        password = "TestPassword123!"
-        pwd_hash, salt1 = hash_password(password)
-        _, salt2 = hash_password(password)
-        
-        assert verify_password(password, pwd_hash, salt2) is False
-
-
-class TestUserManagement:
-    """Test user creation and authentication."""
-    
-    @pytest.fixture
-    def test_db(self, tmp_path):
-        """Create a temporary test database."""
-        db_path = tmp_path / "test.db"
-        conn = sqlite3.connect(str(db_path))
-        init_users_table(conn)
-        yield conn
-        conn.close()
-    
-    def test_init_users_table(self, test_db):
-        """Test that users table is created."""
-        cursor = test_db.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='пользователи'")
-        assert cursor.fetchone() is not None
-    
-    def test_create_user_success(self, test_db):
-        """Test successful user creation."""
-        result = create_user(test_db, "testuser", "Password123!", "user")
-        assert result is True
-        
-        # Verify user exists
-        cursor = test_db.cursor()
-        cursor.execute("SELECT имя_пользователя FROM пользователи WHERE имя_пользователя = ?", ("testuser",))
-        assert cursor.fetchone() is not None
-    
-    def test_create_user_duplicate(self, test_db):
-        """Test that duplicate users are prevented."""
-        create_user(test_db, "testuser", "Password123!", "user")
-        result = create_user(test_db, "testuser", "Password123!", "user")
-        assert result is False
-    
-    def test_authenticate_user_success(self, test_db):
-        """Test successful user authentication."""
-        create_user(test_db, "testuser", "Password123!", "user")
-        user = authenticate_user(test_db, "testuser", "Password123!")
-        
-        assert user is not None
-        assert user['username'] == "testuser"
-        assert user['role'] == "user"
-    
-    def test_authenticate_user_wrong_password(self, test_db):
-        """Test authentication with wrong password."""
-        create_user(test_db, "testuser", "Password123!", "user")
-        user = authenticate_user(test_db, "testuser", "WrongPassword")
-        
-        assert user is None
-    
-    def test_authenticate_user_nonexistent(self, test_db):
-        """Test authentication of non-existent user."""
-        user = authenticate_user(test_db, "nonexistent", "Password123!")
-        assert user is None
 
 
 class TestInputValidation:
@@ -235,34 +129,6 @@ class TestInputValidation:
 class TestPydanticValidation:
     """Test Pydantic validation models."""
     
-    def test_login_request_valid(self):
-        """Test valid login request."""
-        data = {
-            'username': 'testuser',
-            'password': 'Password123!'
-        }
-        request = LoginRequest(**data)
-        assert request.username == 'testuser'
-        assert request.password == 'Password123!'
-    
-    def test_login_request_invalid_short_username(self):
-        """Test login request with too short username."""
-        data = {
-            'username': 'ab',  # Too short
-            'password': 'Password123!'
-        }
-        with pytest.raises(ValidationError):
-            LoginRequest(**data)
-    
-    def test_login_request_invalid_short_password(self):
-        """Test login request with too short password."""
-        data = {
-            'username': 'testuser',
-            'password': 'short'  # Too short
-        }
-        with pytest.raises(ValidationError):
-            LoginRequest(**data)
-    
     def test_control_data_request_valid(self):
         """Test valid control data request."""
         data = {
@@ -327,34 +193,6 @@ class TestPydanticValidation:
         }
         with pytest.raises(ValidationError):
             ShiftCreateRequest(**data)
-    
-    def test_change_password_request_valid(self):
-        """Test valid password change request."""
-        data = {
-            'old_password': 'OldPass123!',
-            'new_password': 'NewPass123!'
-        }
-        request = ChangePasswordRequest(**data)
-        assert request.old_password == 'OldPass123!'
-        assert request.new_password == 'NewPass123!'
-    
-    def test_change_password_request_weak_password(self):
-        """Test password change request with weak password."""
-        # No uppercase
-        with pytest.raises(ValidationError):
-            ChangePasswordRequest(old_password='OldPass123!', new_password='newpass123!')
-        
-        # No lowercase
-        with pytest.raises(ValidationError):
-            ChangePasswordRequest(old_password='OldPass123!', new_password='NEWPASS123!')
-        
-        # No digit
-        with pytest.raises(ValidationError):
-            ChangePasswordRequest(old_password='OldPass123!', new_password='NewPassword!')
-        
-        # Too short
-        with pytest.raises(ValidationError):
-            ChangePasswordRequest(old_password='OldPass123!', new_password='New1!')
 
 
 class TestPathTraversal:

@@ -71,32 +71,6 @@ class QRScanRequest(BaseModel):
     данные: str = Field(..., min_length=1, max_length=500, description="Данные QR кода")
 
 
-class LoginRequest(BaseModel):
-    """Validation model for login."""
-    username: str = Field(..., min_length=3, max_length=100, description="Имя пользователя")
-    password: str = Field(..., min_length=8, max_length=128, description="Пароль")
-
-
-class ChangePasswordRequest(BaseModel):
-    """Validation model for password change."""
-    old_password: str = Field(..., min_length=8, max_length=128, description="Старый пароль")
-    new_password: str = Field(..., min_length=8, max_length=128, description="Новый пароль")
-    
-    @field_validator('new_password')
-    @classmethod
-    def validate_password_strength(cls, v):
-        """Validate password strength."""
-        if len(v) < 8:
-            raise ValueError("Пароль должен содержать минимум 8 символов")
-        if not any(c.isupper() for c in v):
-            raise ValueError("Пароль должен содержать хотя бы одну заглавную букву")
-        if not any(c.islower() for c in v):
-            raise ValueError("Пароль должен содержать хотя бы одну строчную букву")
-        if not any(c.isdigit() for c in v):
-            raise ValueError("Пароль должен содержать хотя бы одну цифру")
-        return v
-
-
 class StatisticsQueryRequest(BaseModel):
     """Validation model for statistics query."""
     дата_начала: Optional[str] = Field(None, description="Дата начала в формате YYYY-MM-DD")
