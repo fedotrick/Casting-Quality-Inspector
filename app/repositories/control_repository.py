@@ -151,6 +151,26 @@ class ControlRepository:
             else:
                 avg_quality = 0
             
+            # Calculate total defects
+            total_defects_result = self.session.query(
+                func.sum(ДефектЗаписи.количество).label('total_defects')
+            ).join(
+                ЗаписьКонтроля,
+                ДефектЗаписи.запись_контроля_id == ЗаписьКонтроля.id
+            ).filter(
+                ЗаписьКонтроля.смена_id == shift_id
+            ).first()
+            
+            total_defects = total_defects_result.total_defects or 0 if total_defects_result else 0
+            
+            # Calculate quality_rate and reject_rate
+            if stats.total_cast and stats.total_cast > 0:
+                quality_rate = (stats.total_accepted / stats.total_cast) * 100
+                reject_rate = (total_defects / stats.total_cast) * 100
+            else:
+                quality_rate = 0
+                reject_rate = 0
+            
             # Defect statistics
             defect_stats = self.session.query(
                 КатегорияДефекта.название.label('категория'),
@@ -178,7 +198,10 @@ class ControlRepository:
                 'total_records': stats.total_records or 0,
                 'total_cast': stats.total_cast or 0,
                 'total_accepted': stats.total_accepted or 0,
+                'total_defects': total_defects,
                 'avg_quality': round(avg_quality, 2),
+                'quality_rate': round(quality_rate, 2),
+                'reject_rate': round(reject_rate, 2),
                 'defects': [
                     {
                         'category': d.категория,

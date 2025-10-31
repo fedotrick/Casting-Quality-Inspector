@@ -102,18 +102,41 @@ def get_control_record_defects(record_id: int) -> list:
         return []
 
 
-def calculate_quality_metrics(total_cast: int, total_accepted: int, defects_data: Dict[int, int]) -> Dict[str, Any]:
+def calculate_quality_metrics(total_cast: Optional[int] = None, 
+                              total_accepted: Optional[int] = None, 
+                              defects_data: Optional[Dict[int, int]] = None,
+                              shift_id: Optional[int] = None) -> Dict[str, Any]:
     """
     Calculate quality metrics.
     
     Args:
-        total_cast: Total cast parts
-        total_accepted: Total accepted parts
-        defects_data: Dictionary mapping defect_type_id to count
+        total_cast: Total cast parts (optional if shift_id is provided)
+        total_accepted: Total accepted parts (optional if shift_id is provided)
+        defects_data: Dictionary mapping defect_type_id to count (optional if shift_id is provided)
+        shift_id: Shift ID to pull statistics from (optional)
         
     Returns:
         Dictionary with quality metrics
     """
+    # If shift_id is provided, pull statistics from repository
+    if shift_id is not None:
+        db_session = get_db()
+        repo = ControlRepository(db_session)
+        stats = repo.get_shift_statistics(shift_id)
+        
+        return {
+            'total_cast': stats['total_cast'],
+            'total_accepted': stats['total_accepted'],
+            'total_defects': stats['total_defects'],
+            'reject_rate': stats['reject_rate'],
+            'quality_rate': stats['quality_rate'],
+            'acceptance_rate': stats['quality_rate']  # For backwards compatibility
+        }
+    
+    # Otherwise, calculate from provided totals (backwards compatible)
+    if total_cast is None or total_accepted is None or defects_data is None:
+        raise ValueError("Either shift_id or (total_cast, total_accepted, defects_data) must be provided")
+    
     total_defects = sum(defects_data.values())
     reject_rate = (total_defects / total_cast * 100) if total_cast > 0 else 0
     acceptance_rate = (total_accepted / total_cast * 100) if total_cast > 0 else 0
@@ -123,5 +146,6 @@ def calculate_quality_metrics(total_cast: int, total_accepted: int, defects_data
         'total_accepted': total_accepted,
         'total_defects': total_defects,
         'reject_rate': round(reject_rate, 2),
-        'acceptance_rate': round(acceptance_rate, 2)
+        'quality_rate': round(acceptance_rate, 2),
+        'acceptance_rate': round(acceptance_rate, 2)  # For backwards compatibility
     }

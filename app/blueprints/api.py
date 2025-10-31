@@ -269,14 +269,21 @@ def calculate_control():
     """Calculate quality metrics"""
     try:
         data = request.get_json()
-        total_cast = data.get('total_cast', 0)
-        total_accepted = data.get('total_accepted', 0)
-        defects_data = data.get('defects', {})
+        shift_id = data.get('shift_id')
         
-        # Convert string keys to int
-        defects_data = {int(k): v for k, v in defects_data.items()}
-        
-        metrics = calculate_quality_metrics(total_cast, total_accepted, defects_data)
+        # If shift_id is provided, use it to calculate metrics
+        if shift_id is not None:
+            metrics = calculate_quality_metrics(shift_id=shift_id)
+        else:
+            # Otherwise, use the provided totals (backwards compatible)
+            total_cast = data.get('total_cast', 0)
+            total_accepted = data.get('total_accepted', 0)
+            defects_data = data.get('defects', {})
+            
+            # Convert string keys to int
+            defects_data = {int(k): v for k, v in defects_data.items()}
+            
+            metrics = calculate_quality_metrics(total_cast, total_accepted, defects_data)
         
         return jsonify({
             'success': True,
