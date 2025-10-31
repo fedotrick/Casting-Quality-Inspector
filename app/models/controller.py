@@ -13,7 +13,7 @@ class Контролёр(Base):
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     имя: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    активен: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    активен: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     
     def __repr__(self):
         return f"<Контролёр(id={self.id}, имя='{self.имя}', активен={self.активен})>"

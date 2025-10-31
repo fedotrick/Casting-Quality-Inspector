@@ -22,7 +22,7 @@ class ControllerRepository:
         try:
             query = self.session.query(Контролёр)
             if active_only:
-                query = query.filter_by(активен=1)
+                query = query.filter_by(активен=True)
             return query.order_by(Контролёр.имя).all()
         except Exception as e:
             logger.error(f"Error getting controllers: {e}")
@@ -47,7 +47,7 @@ class ControllerRepository:
     def add(self, name: str) -> Контролёр:
         """Add new controller"""
         try:
-            controller = Контролёр(имя=name, активен=1)
+            controller = Контролёр(имя=name, активен=True)
             self.session.add(controller)
             self.session.flush()
             logger.info(f"Added controller: {name}")
@@ -65,7 +65,7 @@ class ControllerRepository:
         try:
             controller = self.get_by_id(controller_id)
             if controller:
-                controller.активен = 1 if controller.активен == 0 else 0
+                controller.активен = not controller.активен
                 self.session.flush()
                 logger.info(f"Toggled controller {controller_id} status to {controller.активен}")
                 return True
@@ -89,3 +89,15 @@ class ControllerRepository:
             self.session.rollback()
             logger.error(f"Error deleting controller: {e}")
             raise ОшибкаБазыДанных(f"Failed to delete controller: {str(e)}")
+    
+    def get_active(self) -> List[Контролёр]:
+        """Get active controllers (wrapper for get_all with active_only=True)"""
+        return self.get_all(active_only=True)
+    
+    def create(self, name: str) -> Контролёр:
+        """Create new controller (wrapper for add)"""
+        return self.add(name)
+    
+    def toggle(self, controller_id: int) -> bool:
+        """Toggle controller active status (wrapper for toggle_active)"""
+        return self.toggle_active(controller_id)

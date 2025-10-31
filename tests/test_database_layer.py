@@ -57,7 +57,7 @@ class TestControllerOperations:
             
             assert controller.id is not None
             assert controller.имя == "Test Controller"
-            assert controller.активен == 1
+            assert controller.активен is True
     
     def test_get_all_controllers(self, app, db_session):
         """Test getting all controllers"""

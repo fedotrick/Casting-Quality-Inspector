@@ -164,3 +164,33 @@ class ShiftRepository:
         except Exception as e:
             logger.error(f"Error getting all shifts: {e}")
             raise ОшибкаБазыДанных(f"Failed to get shifts: {str(e)}")
+    
+    def get_by_date_range(self, start_date: str, end_date: str, *, status: Optional[str] = None) -> List[Смена]:
+        """Get shifts by date range and optionally filter by status"""
+        try:
+            query = self.session.query(Смена).filter(
+                and_(
+                    Смена.дата >= start_date,
+                    Смена.дата <= end_date
+                )
+            )
+            if status:
+                query = query.filter_by(статус=status)
+            return query.order_by(
+                Смена.дата.desc(),
+                Смена.номер_смены.desc()
+            ).all()
+        except Exception as e:
+            logger.error(f"Error getting shifts by date range: {e}")
+            raise ОшибкаБазыДанных(f"Failed to get shifts by date range: {str(e)}")
+    
+    def get_recent(self, limit: int = 10) -> List[Смена]:
+        """Get recent shifts ordered by date descending"""
+        try:
+            return self.session.query(Смена).order_by(
+                Смена.дата.desc(),
+                Смена.номер_смены.desc()
+            ).limit(limit).all()
+        except Exception as e:
+            logger.error(f"Error getting recent shifts: {e}")
+            raise ОшибкаБазыДанных(f"Failed to get recent shifts: {str(e)}")
