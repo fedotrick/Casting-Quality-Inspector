@@ -2,7 +2,7 @@
 
 from typing import List, Dict, Optional, Any
 from pydantic import BaseModel, Field, validator, field_validator
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 
 class ShiftCreateRequest(BaseModel):
@@ -17,7 +17,7 @@ class ShiftCreateRequest(BaseModel):
         """Validate date format."""
         try:
             parsed = datetime.strptime(v, '%Y-%m-%d')
-            if parsed.date() > datetime.now().date() + datetime.timedelta(days=1):
+            if parsed.date() > datetime.now().date() + timedelta(days=1):
                 raise ValueError("Дата не может быть в будущем")
             return v
         except ValueError as e:
