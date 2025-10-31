@@ -163,10 +163,56 @@ class TestInputValidation:
     
     def test_sanitize_string(self):
         """Test string sanitization."""
-        assert sanitize_string("<script>alert('xss')</script>") == "scriptalert('xss')/script"
+        # Single quotes should be preserved
+        assert sanitize_string("<script>alert('xss')</script>") == "&lt;script&gt;alert('xss')&lt;/script&gt;"
         assert sanitize_string("Normal text") == "Normal text"
-        assert sanitize_string('Test "quotes"') == "Test quotes"
-        assert sanitize_string("Test & ampersand") == "Test  ampersand"
+        # Double quotes should be encoded
+        assert sanitize_string('Test "quotes"') == "Test &quot;quotes&quot;"
+        # Ampersands should be encoded
+        assert sanitize_string("Test & ampersand") == "Test &amp; ampersand"
+        # Single quotes are preserved
+        assert sanitize_string("It's a test") == "It's a test"
+        assert sanitize_string("O'Brien") == "O'Brien"
+    
+    def test_sanitize_string_preserves_single_quotes(self):
+        """Test that single quotes are preserved while other dangerous chars are encoded."""
+        # Single quotes in various contexts
+        assert sanitize_string("It's working") == "It's working"
+        assert sanitize_string("'quoted'") == "'quoted'"
+        assert sanitize_string("Don't worry") == "Don't worry"
+        
+        # Mixed dangerous characters with single quotes
+        assert sanitize_string("<div class='test'>") == "&lt;div class='test'&gt;"
+        assert sanitize_string("'It's' & \"test\"") == "'It's' &amp; &quot;test&quot;"
+    
+    def test_sanitize_string_xss_protection(self):
+        """Test that XSS attempts are neutralized."""
+        # Script tags
+        assert sanitize_string("<script>alert(1)</script>") == "&lt;script&gt;alert(1)&lt;/script&gt;"
+        
+        # HTML injection
+        assert sanitize_string("<img src=x onerror=alert(1)>") == "&lt;img src=x onerror=alert(1)&gt;"
+        
+        # Attribute injection with double quotes
+        assert sanitize_string('"><script>alert(1)</script>') == "&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;"
+        
+        # Event handlers
+        assert sanitize_string('<a href="javascript:alert(1)">') == "&lt;a href=&quot;javascript:alert(1)&quot;&gt;"
+        
+    def test_sanitize_string_edge_cases(self):
+        """Test edge cases for sanitization."""
+        # Empty and None
+        assert sanitize_string("") == ""
+        assert sanitize_string(None) == ""
+        
+        # Whitespace
+        assert sanitize_string("  test  ") == "test"
+        
+        # Only dangerous characters
+        assert sanitize_string("<>&\"") == "&lt;&gt;&amp;&quot;"
+        
+        # Single quotes only (should be preserved)
+        assert sanitize_string("'''") == "'''"
     
     def test_validate_table_name_whitelist(self):
         """Test table name validation against whitelist."""
