@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Рабочее меню{% endblock %}
+
+{% block content %}
+<h1>🏭 Рабочее меню</h1>
+
+<div class="shift-info">
+    <h3>📋 Информация о смене</h3>
+    <p><strong>Дата:</strong> {{ shift.date }}</p>
+    <p><strong>Смена:</strong> {{ shift.shift_number }} ({{ shift.start_time }} - активна)</p>
+    <p><strong>Контролеры:</strong> {{ shift.controllers|join(', ') }}</p>
+</div>
+
+{% if shift.statistics %}
+<div class="statistics-section">
+    <h3>📊 Статистика смены</h3>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h4>📝 Записей</h4>
+            <p style="font-size: 24px; font-weight: bold; color: #007bff;">{{ shift.statistics.total_records }}</p>
+        </div>
+        <div class="stat-card">
+            <h4>🏭 Отлито</h4>
+            <p style="font-size: 24px; font-weight: bold; color: #28a745;">{{ shift.statistics.total_cast }}</p>
+        </div>
+        <div class="stat-card">
+            <h4>✅ Принято</h4>
+            <p style="font-size: 24px; font-weight: bold; color: #17a2b8;">{{ shift.statistics.total_accepted }}</p>
+        </div>
+        <div class="stat-card">
+            <h4>📈 Качество</h4>
+            <p style="font-size: 24px; font-weight: bold; color: #ffc107;">{{ shift.statistics.avg_quality }}%</p>
+        </div>
+    </div>
+    
+    {% if shift.statistics.defects %}
+    <h4 style="margin-top: 20px;">🔧 Топ-3 дефекта:</h4>
+    {% for defect in shift.statistics.defects[:3] %}
+    <p>• {{ defect.category }}: {{ defect.name }} ({{ defect.count }})</p>
+    {% endfor %}
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="search-section">
+    <h3>🔍 Поиск маршрутной карты</h3>
+    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <input type="text" id="cardNumber" placeholder="000295" maxlength="6" style="flex: 1;">
+        <button class="btn" onclick="searchCard()">🔍 Найти карту</button>
+        <button class="btn btn-info" onclick="startQRScan()">📱 Сканировать QR</button>
+    </div>
+    <div id="qrReader" style="display: none; margin: 10px 0;"></div>
+    <div id="cardResult"></div>
+</div>
+
+<a href="/reports" class="btn btn-info">📊 Отчеты</a>
+<a href="/manage-controllers" class="btn btn-secondary">👥 Контролеры</a>
+<button class="btn btn-danger" onclick="closeShift()">🔚 Закрыть смену</button>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script>
+let html5QrcodeScanner = null;
+
+async function searchCard() {
+    const cardNumber = document.getElementById('cardNumber').value;
+    if (!cardNumber) {
+        alert('Введите номер карты');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/search-card/${cardNumber}`);
+        const data = await response.json();
+        
+        const resultDiv = document.getElementById('cardResult');
+        if (data.success) {
+            const card = data.card;
+            resultDiv.innerHTML = `
+                <div class="card-info">
+                    <h4>✅ Маршрутная карта найдена</h4>
+                    <p><strong>Номер:</strong> ${card.Маршрутная_карта}</p>
+                    <p><strong>Учетный номер:</strong> ${card.Учетный_номер || 'Не указан'}</p>
+                    <p><strong>Номер кластера:</strong> ${card.Номер_кластера || 'Не указан'}</p>
+                    <p><strong>Наименование отливки:</strong> ${card.Наименование_отливки || 'Не указано'}</p>
+                    <p><strong>Тип литниковой системы:</strong> ${card.Тип_литниковой_системы || 'Не указан'}</p>
+                    <button class="btn" onclick="proceedToInput('${cardNumber}')">➡️ Перейти к вводу контроля</button>
+                </div>
+            `;
+        } else {
+            if (data.already_processed) {
+                resultDiv.innerHTML = '<div class="flash-warning">⚠️ ' + data.error + '</div>';
+            } else {
+                resultDiv.innerHTML = '<div class="flash-error">❌ Карта не найдена</div>';
+            }
+        }
+    } catch (error) {
+        alert('Ошибка поиска: ' + error.message);
+    }
+}
+
+function startQRScan() {
+    const qrReaderDiv = document.getElementById('qrReader');
+    
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear();
+        html5QrcodeScanner = null;
+        qrReaderDiv.style.display = 'none';
+        return;
+    }
+    
+    qrReaderDiv.style.display = 'block';
+    qrReaderDiv.innerHTML = '<div id="qr-reader" style="width: 100%;"></div><button onclick="stopQRScan()" class="btn btn-danger" style="margin-top: 10px;">Остановить сканирование</button>';
+    
+    html5QrcodeScanner = new Html5Qrcode("qr-reader");
+    
+    const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 }
+    };
+    
+    html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText, decodedResult) => {
+            document.getElementById('cardNumber').value = decodedText;
+            stopQRScan();
+            searchCard();
+        },
+        (errorMessage) => {}
+    ).catch(err => {
+        console.error('Ошибка запуска камеры:', err);
+        alert('Не удалось запустить камеру. Проверьте разрешения.');
+        qrReaderDiv.style.display = 'none';
+    });
+}
+
+function stopQRScan() {
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(() => {
+            html5QrcodeScanner.clear();
+            html5QrcodeScanner = null;
+            document.getElementById('qrReader').style.display = 'none';
+        }).catch(err => {
+            console.error('Ошибка остановки сканера:', err);
+        });
+    }
+}
+
+// Auto-update statistics every 30 seconds
+async function updateStatistics() {
+    try {
+        const response = await fetch('/api/shifts/current');
+        const data = await response.json();
+        if (data.success && data.shift.statistics) {
+            const stats = data.shift.statistics;
+            const statCards = document.querySelectorAll('.stat-card p');
+            if (statCards.length >= 4) {
+                statCards[0].textContent = stats.total_records || 0;
+                statCards[1].textContent = stats.total_cast || 0;
+                statCards[2].textContent = stats.total_accepted || 0;
+                statCards[3].textContent = (stats.avg_quality || 0) + '%';
+            }
+        }
+    } catch (error) {
+        console.log('Ошибка обновления статистики:', error);
+    }
+}
+
+setInterval(updateStatistics, 30000);
+</script>
+{% endblock %}

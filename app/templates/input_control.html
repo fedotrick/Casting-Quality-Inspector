@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Ввод контроля качества{% endblock %}
+
+{% block content %}
+<h1>📝 Ввод контроля качества</h1>
+
+<div class="card-info">
+    <h3>Маршрутная карта: {{ card_number }}</h3>
+    <p><strong>Учетный номер:</strong> {{ foundry_data.Учетный_номер or 'Не указан' }}</p>
+    <p><strong>Номер кластера:</strong> {{ foundry_data.Номер_кластера or 'Не указан' }}</p>
+    <p><strong>Наименование отливки:</strong> {{ foundry_data.Наименование_отливки or 'Не указано' }}</p>
+    <p><strong>Тип литниковой системы:</strong> {{ foundry_data.Тип_литниковой_системы or 'Не указан' }}</p>
+</div>
+
+<form method="POST" action="{{ url_for('ui.save_control') }}">
+    <input type="hidden" name="card_number" value="{{ card_number }}">
+    
+    <div style="margin-bottom: 20px;">
+        <label for="total_cast">Всего отлито:</label>
+        <input type="number" id="total_cast" name="total_cast" required min="1" style="width: 100%;">
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <label for="total_accepted">Всего принято:</label>
+        <input type="number" id="total_accepted" name="total_accepted" required min="0" style="width: 100%;">
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <label for="controller">Контролер:</label>
+        <select id="controller" name="controller" required style="width: 100%;">
+            <option value="">Выберите контролера</option>
+            {% for controller_name in shift.controllers %}
+            <option value="{{ controller_name }}">{{ controller_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <h3>Дефекты:</h3>
+    {% for category in defect_types %}
+    <div style="background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px;">
+        <h4>{{ category.name }}</h4>
+        {% for defect_type in category.types %}
+        <div style="margin: 5px 0; display: flex; align-items: center; gap: 10px;">
+            <label for="defect_{{ defect_type.id }}" style="flex: 1; font-weight: normal;">{{ defect_type.name }}:</label>
+            <input type="number" id="defect_{{ defect_type.id }}" name="defect_{{ defect_type.id }}" min="0" value="0" style="width: 100px;">
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    
+    <div style="margin-bottom: 20px;">
+        <label for="notes">Заметки (необязательно):</label>
+        <textarea id="notes" name="notes" rows="3" style="width: 100%;"></textarea>
+    </div>
+    
+    <button type="submit" class="btn btn-success">💾 Сохранить</button>
+    <a href="{{ url_for('ui.work_menu') }}" class="btn btn-secondary">❌ Отмена</a>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-calculate accepted based on defects
+document.addEventListener('DOMContentLoaded', function() {
+    const totalCastInput = document.getElementById('total_cast');
+    const totalAcceptedInput = document.getElementById('total_accepted');
+    const defectInputs = document.querySelectorAll('input[name^="defect_"]');
+    
+    function calculateAccepted() {
+        const totalCast = parseInt(totalCastInput.value) || 0;
+        let totalDefects = 0;
+        
+        defectInputs.forEach(input => {
+            totalDefects += parseInt(input.value) || 0;
+        });
+        
+        const accepted = Math.max(0, totalCast - totalDefects);
+        totalAcceptedInput.value = accepted;
+    }
+    
+    totalCastInput.addEventListener('input', calculateAccepted);
+    defectInputs.forEach(input => {
+        input.addEventListener('input', calculateAccepted);
+    });
+});
+</script>
+{% endblock %}

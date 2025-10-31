@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Управление контролерами{% endblock %}
+
+{% block content %}
+<h1>👥 Управление контролерами</h1>
+
+<a href="{{ url_for('ui.work_menu') }}" class="btn btn-secondary">⬅️ Назад</a>
+
+<div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 10px;">
+    <h3>Добавить контролера</h3>
+    <form id="addControllerForm" onsubmit="addController(event)">
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="controllerName" placeholder="Имя контролера" required style="flex: 1;">
+            <button type="submit" class="btn btn-success">➕ Добавить</button>
+        </div>
+    </form>
+</div>
+
+<h3>Список контролеров</h3>
+{% if controllers %}
+<table>
+    <thead>
+        <tr>
+            <th>Имя</th>
+            <th>Статус</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody id="controllersTable">
+        {% for controller in controllers %}
+        <tr id="controller_{{ controller.id }}">
+            <td>{{ controller.имя }}</td>
+            <td>{{ 'Активен' if controller.активен else 'Неактивен' }}</td>
+            <td>
+                <button class="btn btn-warning" onclick="toggleController({{ controller.id }})">
+                    {{ 'Деактивировать' if controller.активен else 'Активировать' }}
+                </button>
+                <button class="btn btn-danger" onclick="deleteController({{ controller.id }})">Удалить</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Нет контролеров</p>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function addController(event) {
+    event.preventDefault();
+    const name = document.getElementById('controllerName').value;
+    
+    try {
+        const formData = new FormData();
+        formData.append('name', name);
+        
+        const response = await fetch('/api/add-controller', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Контролер добавлен');
+            location.reload();
+        } else {
+            alert('Ошибка: ' + data.error);
+        }
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function toggleController(id) {
+    try {
+        const formData = new FormData();
+        formData.append('id', id);
+        
+        const response = await fetch('/api/toggle-controller', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Ошибка: ' + data.error);
+        }
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+}
+
+async function deleteController(id) {
+    if (!confirm('Вы уверены, что хотите удалить этого контролера?')) {
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('id', id);
+        
+        const response = await fetch('/api/delete-controller', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Ошибка: ' + data.error);
+        }
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+}
+</script>
+{% endblock %}
