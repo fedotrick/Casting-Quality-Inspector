@@ -190,11 +190,12 @@ If issues arise:
 
 ## Next Steps (Optional)
 
-1. **Alembic Setup** - Add database migration tool
-2. **Caching** - Integrate Redis for frequently accessed data
-3. **Monitoring** - Add query performance tracking
-4. **Connection Pooling** - Fine-tune for production
-5. **Read Replicas** - Support for reporting queries
+1. **Caching** - Integrate Redis for frequently accessed data
+2. **Monitoring** - Add query performance tracking
+3. **Connection Pooling** - Fine-tune for production
+4. **Read Replicas** - Support for reporting queries
+
+**Note**: Dependencies have been cleaned up to include only packages actively used in the codebase. See [CHANGELOG.md](CHANGELOG.md) for details.
 
 ## Support
 
