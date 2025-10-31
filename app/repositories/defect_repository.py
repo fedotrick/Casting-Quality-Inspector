@@ -89,3 +89,28 @@ class DefectRepository:
         except Exception as e:
             logger.error(f"Error getting defect types by category: {e}")
             raise ОшибкаБазыДанных(f"Failed to get defect types: {str(e)}")
+    
+    def get_all_categories(self) -> List[КатегорияДефекта]:
+        """Get all defect categories ordered by sort column"""
+        try:
+            return self.session.query(КатегорияДефекта).order_by(
+                КатегорияДефекта.порядок_сортировки,
+                КатегорияДефекта.название
+            ).all()
+        except Exception as e:
+            logger.error(f"Error getting all categories: {e}")
+            raise ОшибкаБазыДанных(f"Failed to get all categories: {str(e)}")
+    
+    def get_all_types(self, active_only: bool = True) -> List[ТипДефекта]:
+        """Get all defect types ordered by sort column"""
+        try:
+            query = self.session.query(ТипДефекта)
+            if active_only:
+                query = query.filter_by(активен=1)
+            return query.order_by(
+                ТипДефекта.порядок_сортировки,
+                ТипДефекта.название
+            ).all()
+        except Exception as e:
+            logger.error(f"Error getting all types: {e}")
+            raise ОшибкаБазыДанных(f"Failed to get all types: {str(e)}")

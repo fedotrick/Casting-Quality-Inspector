@@ -192,3 +192,28 @@ class ControlRepository:
         except Exception as e:
             logger.error(f"Error getting shift statistics: {e}")
             raise ОшибкаБазыДанных(f"Failed to get shift statistics: {str(e)}")
+    
+    def count_by_shift(self, shift_id: int) -> int:
+        """Count control records by shift ID"""
+        try:
+            count = self.session.query(func.count(ЗаписьКонтроля.id)).filter(
+                ЗаписьКонтроля.смена_id == shift_id
+            ).scalar()
+            return count or 0
+        except Exception as e:
+            logger.error(f"Error counting control records by shift: {e}")
+            raise ОшибкаБазыДанных(f"Failed to count control records: {str(e)}")
+    
+    def check_duplicate_card(self, card_number: str, shift_id: int) -> bool:
+        """Check if route card has already been processed in a specific shift"""
+        try:
+            count = self.session.query(func.count(ЗаписьКонтроля.id)).filter(
+                and_(
+                    ЗаписьКонтроля.номер_маршрутной_карты == card_number,
+                    ЗаписьКонтроля.смена_id == shift_id
+                )
+            ).scalar()
+            return count > 0
+        except Exception as e:
+            logger.error(f"Error checking duplicate card in shift: {e}")
+            raise ОшибкаБазыДанных(f"Failed to check duplicate card: {str(e)}")

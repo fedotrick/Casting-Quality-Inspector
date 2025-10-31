@@ -179,7 +179,7 @@ def get_all_controllers():
     session = get_db()
     repo = ControllerRepository(session)
     try:
-        controllers = repo.get_all(active_only=True)
+        controllers = repo.get_active()
         return [c.to_dict() for c in controllers]
     except Exception as e:
         logger.error(f"Error getting controllers: {e}")
@@ -191,7 +191,7 @@ def add_controller(name: str):
     session = get_db()
     repo = ControllerRepository(session)
     try:
-        controller = repo.add(name)
+        controller = repo.create(name)
         session.commit()
         logger.info(f"Added controller: {name}")
         return controller.id
@@ -205,7 +205,7 @@ def toggle_controller(controller_id: int):
     session = get_db()
     repo = ControllerRepository(session)
     try:
-        result = repo.toggle_active(controller_id)
+        result = repo.toggle(controller_id)
         session.commit()
         logger.info(f"Toggled controller {controller_id} status")
         return result
