@@ -37,17 +37,42 @@ class ShiftRepository:
             logger.error(f"Error getting active shift: {e}")
             raise ОшибкаБазыДанных(f"Failed to get active shift: {str(e)}")
     
-    def check_duplicate(self, date: str, shift_number: int) -> bool:
-        """Check if active shift already exists for date and shift number"""
+    def check_duplicate(self, date: str, shift_number: int, *, 
+                        statuses: tuple = ('активна',), 
+                        exclude_shift_id: Optional[int] = None) -> bool:
+        """
+        Check if shift already exists for date and shift number.
+        
+        Args:
+            date: Shift date in YYYY-MM-DD format
+            shift_number: Shift number (1 or 2)
+            statuses: Tuple of statuses to check (default: only 'активна')
+            exclude_shift_id: Shift ID to exclude from check (useful for updates)
+            
+        Returns:
+            True if duplicate found, False otherwise
+        """
         try:
-            count = self.session.query(func.count(Смена.id)).filter(
+            # Normalize statuses to lowercase for case-insensitive comparison
+            # SQLite's lower() doesn't work with Cyrillic, so we normalize in Python
+            normalized_statuses = tuple(s.lower() for s in statuses)
+            
+            # Query for matching shifts
+            query = self.session.query(Смена).filter(
                 and_(
                     Смена.дата == date,
-                    Смена.номер_смены == shift_number,
-                    Смена.статус == 'активна'
+                    Смена.номер_смены == shift_number
                 )
-            ).scalar()
-            return count > 0
+            )
+            
+            if exclude_shift_id is not None:
+                query = query.filter(Смена.id != exclude_shift_id)
+            
+            # Fetch all shifts and filter by status in Python (for case-insensitive Cyrillic)
+            shifts = query.all()
+            matching_shifts = [s for s in shifts if s.статус.lower() in normalized_statuses]
+            
+            return len(matching_shifts) > 0
         except Exception as e:
             logger.error(f"Error checking duplicate shift: {e}")
             raise ОшибкаБазыДанных(f"Failed to check duplicate shift: {str(e)}")
@@ -58,8 +83,8 @@ class ShiftRepository:
         import json
         
         try:
-            # Check for duplicate
-            if self.check_duplicate(date, shift_number):
+            # Check for duplicate active shift only
+            if self.check_duplicate(date, shift_number, statuses=('активна',)):
                 raise ОшибкаБазыДанных(f"Смена {shift_number} на дату {date} уже активна")
             
             start_time = datetime.now().strftime('%H:%M')

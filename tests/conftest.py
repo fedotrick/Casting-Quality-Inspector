@@ -21,6 +21,11 @@ def app():
     Create and configure a test application instance with temporary database.
     Uses :memory: SQLite database with Cyrillic table names.
     """
+    # Reset global database engine and session factory for clean test isolation
+    import app.database.session as session_module
+    session_module._engine = None
+    session_module._session_factory = None
+    
     app = create_app('testing')
     
     # Ensure testing configuration
@@ -36,6 +41,9 @@ def app():
     yield app
     
     # Cleanup happens automatically with :memory: database
+    # Reset globals again to ensure clean state
+    session_module._engine = None
+    session_module._session_factory = None
 
 
 @pytest.fixture(scope='function')

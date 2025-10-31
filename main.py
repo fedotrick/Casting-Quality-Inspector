@@ -84,26 +84,18 @@ def validate_shift_data_extended(date, shift_number, controllers):
     if not controllers or len(controllers) == 0:
         errors.append("Необходимо выбрать хотя бы одного контролера")
     
-    # Проверка на дублирование смены
+    # Проверка на дублирование активной смены
     if not errors and date and shift_number:
-        conn = get_db_connection()
-        if conn:
-            try:
-                cursor = conn.cursor()
-                cursor.execute('''
-                    SELECT COUNT(*) FROM смены
-                    WHERE дата = ? AND номер_смены = ? AND статус = 'активна'
-                ''', (date, shift_number))
-                
-                if cursor.fetchone()[0] > 0:
-                    errors.append(f"Смена {shift_number} на дату {date} уже активна")
-                
-                conn.close()
-            except Exception as e:
-                logger.error(f"Ошибка проверки дублирования смены: {e}")
-                errors.append("Ошибка проверки данных смены")
-                if conn:
-                    conn.close()
+        try:
+            from app.repositories import ShiftRepository
+            from app.database import get_db
+            session = get_db()
+            repo = ShiftRepository(session)
+            if repo.check_duplicate(date, shift_number, statuses=('активна',)):
+                errors.append(f"Смена {shift_number} на дату {date} уже активна")
+        except Exception as e:
+            logger.error(f"Ошибка проверки дублирования смены: {e}")
+            errors.append("Ошибка проверки данных смены")
     
     return errors
 
@@ -180,26 +172,18 @@ def validate_shift_data_enhanced(date, shift_number, controllers):
     if not controllers or len(controllers) == 0:
         errors.append("Необходимо выбрать хотя бы одного контролера")
     
-    # Проверка на дублирование смены
+    # Проверка на дублирование активной смены
     if not errors and date and shift_number:
-        conn = get_db_connection()
-        if conn:
-            try:
-                cursor = conn.cursor()
-                cursor.execute('''
-                    SELECT COUNT(*) FROM смены
-                    WHERE дата = ? AND номер_смены = ? AND статус = 'активна'
-                ''', (date, shift_number))
-                
-                if cursor.fetchone()[0] > 0:
-                    errors.append(f"Смена {shift_number} на дату {date} уже активна")
-                
-                conn.close()
-            except Exception as e:
-                logger.error(f"Ошибка проверки дублирования смены: {e}")
-                errors.append("Ошибка проверки данных смены")
-                if conn:
-                    conn.close()
+        try:
+            from app.repositories import ShiftRepository
+            from app.database import get_db
+            session = get_db()
+            repo = ShiftRepository(session)
+            if repo.check_duplicate(date, shift_number, statuses=('активна',)):
+                errors.append(f"Смена {shift_number} на дату {date} уже активна")
+        except Exception as e:
+            logger.error(f"Ошибка проверки дублирования смены: {e}")
+            errors.append("Ошибка проверки данных смены")
     
     return errors
 
