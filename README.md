@@ -16,7 +16,7 @@
 1. Установите зависимости:
 
 ```bash
-pip install flask flask-cors
+pip install -r requirements.txt
 ```
 
 2. Запустите систему:
@@ -47,3 +47,129 @@ python main.py
 ❌ Убрана температура из информации о маршрутке  
 ✅ Добавлены ВСЕ дефекты из control.xlsx  
 ✅ Возможность добавления новых типов дефектов
+
+## Тестирование
+
+Проект включает комплексный набор тестов с использованием pytest.
+
+### Установка зависимостей для тестирования
+
+```bash
+pip install -r requirements.txt
+```
+
+### Запуск тестов
+
+Запуск всех тестов:
+
+```bash
+pytest
+```
+
+Запуск с подробным выводом:
+
+```bash
+pytest -v
+```
+
+Запуск конкретного файла тестов:
+
+```bash
+pytest tests/test_shifts.py
+pytest tests/test_api.py
+```
+
+Запуск с измерением покрытия кода:
+
+```bash
+pytest --cov=app --cov-report=html
+```
+
+После выполнения откройте `htmlcov/index.html` для просмотра отчета о покрытии.
+
+### Запуск тестов по категориям
+
+Используйте маркеры для запуска определенных групп тестов:
+
+```bash
+# Только юнит-тесты
+pytest -m unit
+
+# Только интеграционные тесты
+pytest -m integration
+
+# Только API тесты
+pytest -m api
+
+# Только тесты базы данных
+pytest -m database
+```
+
+### Структура тестов
+
+- `tests/conftest.py` - Фикстуры и конфигурация pytest
+- `tests/test_shifts.py` - Тесты создания и управления сменами
+- `tests/test_control_records.py` - Тесты записей контроля и дефектов
+- `tests/test_route_cards.py` - Тесты поиска маршрутных карт
+- `tests/test_api.py` - Тесты API endpoints
+- `tests/test_repositories.py` - Тесты слоя данных (repositories)
+- `tests/test_validators.py` - Тесты валидации входных данных
+- `tests/test_error_handlers.py` - Тесты обработки ошибок
+- `tests/test_security.py` - Тесты безопасности и авторизации
+- `tests/test_database_layer.py` - Тесты SQLAlchemy слоя
+- `tests/test_integration.py` - Интеграционные тесты
+- `tests/test_auth_integration.py` - Тесты аутентификации
+
+### Особенности тестов
+
+- **Изолированные тесты**: Каждый тест использует временную базу данных SQLite в памяти (`:memory:`)
+- **Cyrillic table names**: Тесты работают с оригинальными именами таблиц на кириллице (смены, контролёры, и т.д.)
+- **Mocked external DB**: Внешние базы данных (foundry.db) замокированы для изоляции тестов
+- **Sample data**: Автоматическое наполнение тестовыми данными (контролеры, типы дефектов)
+
+### Continuous Integration
+
+Тесты готовы к использованию в CI/CD pipeline. Пример GitHub Actions:
+
+```yaml
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+    - name: Run tests
+      run: |
+        pytest --cov=app --cov-report=xml
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+```
+
+### Написание новых тестов
+
+При добавлении новой функциональности, следуйте этим рекомендациям:
+
+1. Используйте существующие фикстуры из `conftest.py`
+2. Создайте тестовые классы для группировки связанных тестов
+3. Добавьте соответствующие маркеры (`@pytest.mark.unit`, `@pytest.mark.integration`)
+4. Моки́руйте внешние зависимости (базы данных, API)
+5. Тесты должны быть независимыми и идемпотентными
+
+## Архитектура
+
+- **App Factory Pattern**: Использование `create_app()` для гибкой конфигурации
+- **SQLAlchemy ORM**: Работа с базой данных через ORM с кириллическими именами
+- **Repository Pattern**: Абстракция доступа к данным
+- **Service Layer**: Бизнес-логика отделена от представления
+- **Blueprint Architecture**: Модульная структура маршрутов (UI, API)
