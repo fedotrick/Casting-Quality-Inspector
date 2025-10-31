@@ -75,7 +75,8 @@ def validate_shift_data_extended(date: str, shift_number: int, controllers: List
     Returns:
         List of error messages (empty if valid)
     """
-    from ..services.database_service import get_db_connection
+    from ..repositories import ShiftRepository
+    from ..database import get_db
     
     errors = []
     
@@ -101,24 +102,14 @@ def validate_shift_data_extended(date: str, shift_number: int, controllers: List
     
     # Check for duplicate active shift
     if not errors and date and shift_number:
-        conn = get_db_connection()
-        if conn:
-            try:
-                cursor = conn.cursor()
-                cursor.execute('''
-                    SELECT COUNT(*) FROM смены
-                    WHERE дата = ? AND номер_смены = ? AND статус = 'активна'
-                ''', (date, shift_number))
-                
-                if cursor.fetchone()[0] > 0:
-                    errors.append(f"Смена {shift_number} на дату {date} уже активна")
-                
-                conn.close()
-            except Exception as e:
-                logger.error(f"Ошибка проверки дублирования смены: {e}")
-                errors.append("Ошибка проверки данных смены")
-                if conn:
-                    conn.close()
+        try:
+            session = get_db()
+            repo = ShiftRepository(session)
+            if repo.check_duplicate(date, shift_number):
+                errors.append(f"Смена {shift_number} на дату {date} уже активна")
+        except Exception as e:
+            logger.error(f"Ошибка проверки дублирования смены: {e}")
+            errors.append("Ошибка проверки данных смены")
     
     return errors
 
